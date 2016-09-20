@@ -1,33 +1,48 @@
 package com.example.administrator.searchpicturetool.presenter.adapter;
 
-import android.content.Context;
+import android.app.Activity;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v4.view.PagerAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.example.administrator.searchpicturetool.R;
+import com.example.administrator.searchpicturetool.library.imageLoader.EasyImageLoader;
+import com.example.administrator.searchpicturetool.model.SaveBitmapModel;
 import com.example.administrator.searchpicturetool.model.bean.NetImage;
-import com.facebook.drawee.view.SimpleDraweeView;
+import com.example.administrator.searchpicturetool.widght.PinchImageView;
+import com.example.administrator.searchpicturetool.widght.PinchImageViewPager;
+import com.facebook.common.executors.CallerThreadExecutor;
+import com.facebook.common.references.CloseableReference;
+import com.facebook.datasource.DataSource;
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.imagepipeline.core.ImagePipeline;
+import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber;
+import com.facebook.imagepipeline.image.CloseableImage;
 import com.jude.utils.JUtils;
+import com.pnikosis.materialishprogress.ProgressWheel;
 
 import java.util.ArrayList;
 
 /**
  * Created by wenhuaijun on 2015/11/8 0008.
  */
-public  class ShowLargeImgAdapter extends PagerAdapter {
-    private SimpleDraweeView simpleDraweeView;
+public class ShowLargeImgAdapter extends PagerAdapter implements View.OnClickListener {
+    ViewGroup.LayoutParams mLayoutParams;
     private ArrayList<NetImage> netImages;
-    private Context context;
+    private Activity context;
     private LayoutInflater inflater;
     private int screenHeight;
     private int screenWidth;
     private View view;
-    ViewGroup.LayoutParams mLayoutParams;
+    private int currentPosition = -1;
+    private PinchImageViewPager mPinchImageViewPager;
 
-    public ShowLargeImgAdapter(ArrayList<NetImage> netImages, Context context) {
+    public ShowLargeImgAdapter(ArrayList<NetImage> netImages, Activity context) {
         this.netImages = netImages;
         this.context = context;
         screenHeight = JUtils.getScreenHeight();
@@ -49,37 +64,98 @@ public  class ShowLargeImgAdapter extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         //  super.destroyItem(container, position, object);
-        container.removeView((View)object);
+        container.removeView((View) object);
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
         view = inflater.inflate(R.layout.item_large_img, null);
-        simpleDraweeView = (SimpleDraweeView) view.findViewById(R.id.photoView);
-        mLayoutParams = simpleDraweeView.getLayoutParams();
-        if (netImages.get(position).getWidth() != 0 && netImages.get(position).getHeight() != 0) {
-           /* float mHeight = ((float) (netImages.get(position).getHeight()) / ((float) (netImages.get(position).getWidth()))) * screenWidth;
-                mLayoutParams.width = screenWidth;
-                mLayoutParams.height = (int) mHeight;*/
-            if(netImages.get(position).getHeight()<=netImages.get(position).getWidth()*2){
-                float mHeight = ((float) (netImages.get(position).getHeight()) / ((float) (netImages.get(position).getWidth()))) * screenWidth;
-                mLayoutParams.width = screenWidth;
-                mLayoutParams.height = (int)mHeight;
-            }else{
-                float mWidth =((float) (netImages.get(position).getWidth()) / ((float) (netImages.get(position).getHeight()))) * screenHeight;
-                mLayoutParams.height = screenHeight;
-                mLayoutParams.width = (int)mWidth;
+
+        PinchImageView pinchImageView = (PinchImageView) view.findViewById(R.id.photoView);
+        ProgressWheel progressWheel = (ProgressWheel)view.findViewById(R.id.progress_wheel);
+        pinchImageView.setOnClickListener(this);
+        //加载低分辨率图片
+
+        DataSource<CloseableReference<CloseableImage>> dataSource =SaveBitmapModel.
+                getFrescoCacheBitmap(context, netImages.get(position).getThumbImg());
+       if(dataSource!=null){
+           //fresco含有缓存时直接现在缩略图
+           progressWheel.setVisibility(View.GONE);
+           dataSource.subscribe(new BaseBitmapDataSubscriber() {
+                       @Override
+                       protected void onNewResultImpl(Bitmap bitmap) {
+
+                           if (pinchImageView != null) {
+                               if(bitmap!=null){
+                                   pinchImageView.post(new Runnable() {
+                                       @Override
+                                       public void run() {
+                                           pinchImageView.setImageBitmap(bitmap);
+                                       }
+                                   });
+                               }
+                           }
+                       }
+
+                       @Override
+                       protected void onFailureImpl(DataSource<CloseableReference<CloseableImage>> dataSource) {
+                           JUtils.Log("请求缩略图bitmap失败");
+                       }
+                   }, CallerThreadExecutor.getInstance());
+       }else {
+           progressWheel.setVisibility(View.VISIBLE);
+       }
+        container.addView(view);
+
+        return view;
+    }
+
+    @Override
+    public void setPrimaryItem(ViewGroup container, int position, Object object) {
+        super.setPrimaryItem(container, position, object);
+        if (currentPosition != position&&object!=null) {
+            PinchImageView pinchImageView = (PinchImageView) (((View) object).findViewById(R.id.photoView));
+            ProgressWheel progressWheel = (ProgressWheel) (((View) object).findViewById(R.id.progress_wheel));
+            if (pinchImageView.getTag() == null || !pinchImageView.getTag().equals(netImages.get(position).getLargeImg())) {
+                pinchImageView.setTag(netImages.get(position).getLargeImg());
+                EasyImageLoader.getInstance(context).getBitmap(netImages.get(position).getLargeImg(), new EasyImageLoader.BitmapCallback() {
+                    @Override
+                    public void onResponse(Bitmap bitmap) {
+
+                        if(bitmap!=null){
+                            if(progressWheel.isShown()){
+                                progressWheel.setVisibility(View.GONE);
+                            }
+                            pinchImageView.setImageBitmap(bitmap);
+                        }else {
+                            if(progressWheel.isShown()){
+                                progressWheel.setVisibility(View.GONE);
+                                EasyImageLoader.getInstance(context).bindBitmap(netImages.get(position).getThumbImg(), pinchImageView);
+                            }
+                            JUtils.Toast("该图没有高清图...");
+                        }
+                    }
+                });
             }
 
-                simpleDraweeView.setLayoutParams(mLayoutParams);
-
-        }else{
-            mLayoutParams.width = screenWidth;
-            mLayoutParams.height = screenHeight;
-            simpleDraweeView.setLayoutParams(mLayoutParams);
+            if (getPinchImageViewPager() != null && pinchImageView != null) {
+                getPinchImageViewPager().setMainPinchImageView(pinchImageView);
+            }
+            currentPosition = position;
         }
-            simpleDraweeView.setImageURI(Uri.parse(netImages.get(position).getLargeImg()));
-            container.addView(view);
-            return view;
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        context.finish();
+    }
+
+    public PinchImageViewPager getPinchImageViewPager() {
+        return mPinchImageViewPager;
+    }
+
+    public void setPinchImageViewPager(PinchImageViewPager mPinchImageViewPager) {
+        this.mPinchImageViewPager = mPinchImageViewPager;
     }
 }

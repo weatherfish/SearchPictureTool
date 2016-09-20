@@ -5,6 +5,7 @@ import cn.bmob.v3.BmobObject;
 /**
  * Created by wenhuaijun on 2016/2/15 0015.
  */
+@Deprecated
 public class Banner extends BmobObject{
     private String introduce;
     private String searchTip;

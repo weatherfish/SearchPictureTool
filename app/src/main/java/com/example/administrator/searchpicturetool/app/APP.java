@@ -1,13 +1,9 @@
 package com.example.administrator.searchpicturetool.app;
 
-import android.app.Activity;
 import android.app.Application;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.jude.beam.Beam;
-import com.jude.beam.bijection.ActivityLifeCycleDelegate;
-import com.jude.beam.bijection.ActivityLifeCycleDelegateProvider;
-import com.jude.http.RequestManager;
 import com.jude.utils.JFileManager;
 import com.jude.utils.JUtils;
 
@@ -21,26 +17,24 @@ public class APP extends Application{
     public static  APP getInstance(){
         return instance;
     }
+
+   // public RefWatcher mRefWatcher;
+
     @Override
     public void onCreate() {
         super.onCreate();
         instance=this;
         Beam.init(this);
-        Beam.setActivityLifeCycleDelegateProvider(new ActivityLifeCycleDelegateProvider() {
-            @Override
-            public ActivityLifeCycleDelegate createActivityLifeCycleDelegate(Activity activity) {
-                return new ActivityDelegate(activity);
-            }
-        });
+        Beam.setActivityLifeCycleDelegateProvider(ActivityDelegate::new);
         Fresco.initialize(this);
-      /*  RequestManager.getInstance().init(this);
-        RequestManager.getInstance().setDebugMode(true, "heheda");*/
+     //   mRefWatcher = LeakCanary.install(this);
         Bmob.initialize(this,"633edd745d4d8630d88c73a16440cb9a");
         JUtils.initialize(this);
-        JUtils.setDebug(false, "heheda");
-        //JFileManager.getInstance().init(this,Dir.values());
+        JUtils.setDebug(true, "heheda");
+        JFileManager.getInstance().init(this, Dir.values());
     }
+    //文件目录列表
     public enum Dir{
-        Image,Text,Object,
+       Object
     }
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.administrator.searchpicturetool">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -14,48 +13,33 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.GET_TASKS" />
+    <!--<uses-permission android:name="android.permission.GET_TASKS" />-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- 可选 -->
-    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_ADDED" />
-    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_CHANGED" />
-    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_INSTALL" />
-    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_REPLACED" />
-    <uses-permission android:name="android.permission.RESTART_PACKAGES" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
-    <!-- youmi-->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- 如果使用积分墙广告,还需要配置下面权限 -->
-    <uses-permission android:name="android.permission.GET_TASKS" />
-    <uses-permission
-        android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission
-        android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-
-    <!-- 以下为可选权限 -->
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />;
-    <!-- youmi-->
     <application
         android:name=".app.APP"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme.NoActionBar" >
-        <meta-data android:value="56413c70e0f55ab75e002f16" android:name="UMENG_APPKEY"></meta-data>
+        android:theme="@style/AppTheme" >
+        <meta-data
+            android:value="${UMENG_APPKEY}"
+            android:name="UMENG_APPKEY"/>
+
         <meta-data
             android:name="UMENG_MESSAGE_SECRET"
-            android:value="20648810536264b42810627f01185cab" >
+            android:value="${UMENG_MESSAGE_SECRET}" >
         </meta-data>
-        <meta-data android:value="xiaomi_2.0" android:name="UMENG_CHANNEL"/>
+
+        <meta-data android:value="${UMENG_CHANNEL}"
+            android:name="UMENG_CHANNEL"/>
+
+
         <activity android:name=".view.activity.LaunchActivity"
             android:theme="@style/LaunchTheme"
             >
@@ -70,16 +54,33 @@
              >
         </activity>
         <activity android:name=".view.activity.SearchActivity"/>
-        <activity android:name=".view.activity.ShowLargeImgActivity"/>
-        <activity android:name=".view.activity.UserActivity"/>
-        <activity android:name=".view.activity.ShowDownloadImgActivity"/>
-        <activity android:name=".view.activity.SettingActivity"/>
+        <activity android:name=".view.activity.ShowLargeImgActivity"
+            />
+        <activity android:name=".view.activity.BannerListActivity"
+            android:label="@string/menu_recommend"
+            />
+        <activity
+            android:name=".view.activity.UserActivity"
+            android:label="我的图片"
+            />
+        <activity android:name=".view.activity.ShowDownloadImgActivity"
+            android:label=" "
+            />
+        <activity android:name=".view.activity.SettingActivity"
+            android:label="设置"
+            />
+        <activity android:name=".view.activity.MoreRecommendActivity"
+            android:label="更多"
+            />
+
 
         <!-- umeng -->
 
         <!--response-->
         <activity
-            android:name="com.umeng.fb.ConversationActivity"/>
+            android:name="com.umeng.fb.ConversationActivity"
+            android:label="意见反馈"
+            />
         <!--response-->
         <service
             android:name="com.umeng.update.net.DownloadingService"
@@ -125,6 +126,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:screenOrientation="portrait" />
+
         <!--umeng push -->
         <!-- 监听通知点击或者忽略处理的广播 -->
         <receiver
