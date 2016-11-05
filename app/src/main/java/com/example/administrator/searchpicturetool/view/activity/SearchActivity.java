@@ -8,7 +8,9 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -20,7 +22,9 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import com.example.administrator.searchpicturetool.R;
+import com.example.administrator.searchpicturetool.config.Constant;
 import com.example.administrator.searchpicturetool.presenter.activityPresenter.SearchActivityPresenter;
+import com.example.administrator.searchpicturetool.util.Utils;
 import com.example.administrator.searchpicturetool.view.fragment.SearchFragment;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.jude.beam.bijection.RequiresPresenter;
@@ -56,6 +60,8 @@ public class SearchActivity extends BeamBaseActivity<SearchActivityPresenter> {
     private SearchFragment searchFragment;
     private String imagUrl;
     private String searchWord;
+    private String uriType;
+    private String uri;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,11 +73,20 @@ public class SearchActivity extends BeamBaseActivity<SearchActivityPresenter> {
         searchWord = getIntent().getBundleExtra("search").getString("search");
         collapsingToolbarLayout.setTitle(searchWord);
         marginTopStatusHeight();
+        marginNavigationBar(fab);
         imagUrl = getIntent().getBundleExtra("search").getString("imagUrl");
-        if (TextUtils.isEmpty(imagUrl)) {
-            imageView.setBackgroundResource(getPresenter().getBgImg());
-        } else {
+        uriType =getIntent().getBundleExtra("search").getString("uriType");
+        if(TextUtils.isEmpty(imagUrl)){
+            uri =getPresenter().getBgImg()+"";
+            imageView.setBackgroundResource(Integer.parseInt(uri));
+            uriType =Constant.URI_TYPE_NATIVE;
+        }else if(TextUtils.isEmpty(uriType)||uriType.equals(Constant.URI_TYPE_NET)){
             imageView.setImageURI(Uri.parse(imagUrl));
+            uriType =Constant.URI_TYPE_NET;
+            uri =imagUrl;
+        } else  if(uriType.equals(Constant.URI_TYPE_NATIVE)){
+            imageView.setBackgroundResource(Integer.parseInt(imagUrl));
+            uri=imagUrl;
         }
         manager = getSupportFragmentManager();
         searchFragment = new SearchFragment();
@@ -94,6 +109,15 @@ public class SearchActivity extends BeamBaseActivity<SearchActivityPresenter> {
             mCoordinatorLayout.setLayoutParams(relativeLayoutParams);
             toolbar.setLayoutParams(frameLayoutParams);
         }
+    }
+
+    public void marginNavigationBar(View view){
+        if(!Utils.checkDeviceHasNavigationBar(this)){
+            return;
+        }
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+        layoutParams.setMargins(JUtils.dip2px(16),JUtils.dip2px(16),JUtils.dip2px(16),Utils.getNavigationBarHeight(this)/2);
+        view.setLayoutParams(layoutParams);
     }
 
     @Override
@@ -133,26 +157,28 @@ public class SearchActivity extends BeamBaseActivity<SearchActivityPresenter> {
                     }
                 }
 
-                return true;
+                break;
             case R.id.action_collect_header_img:
                 getPresenter().collectHeaderImg(imagUrl);
-                JUtils.Toast("收藏封面图片成功");
-                return true;
+
+                break;
             case R.id.action_download_header_img:
                 getPresenter().downloadHeaderImg(imagUrl);
-                return true;
+                break;
             case R.id.action_collect_tip:
-                getPresenter().collectSearchTip(searchWord);
-                return true;
+                getPresenter().collectSearchTip(searchWord,uriType,uri);
+                break;
             default:
                 return super.onOptionsItemSelected(item);
         }
+        return true;
     }
 
     public void initAppBarSetting() {
         appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
+                stopRefresh(i);
                 if (i > (-maxScrollHeight/2) && fab.isShown()) {
                     fab.hide();
                     if (item != null) {
@@ -188,6 +214,9 @@ public class SearchActivity extends BeamBaseActivity<SearchActivityPresenter> {
     @OnClick(R.id.search_fab)
     public void clickFab(View view) {
         getPresenter().gotoUpWithAnim(0);
+    }@OnClick(R.id.floating_action_button)
+    public void collectSearchTip(View view) {
+        getPresenter().collectSearchTip(searchWord,uriType,uri);
     }
 
     @Override
@@ -231,5 +260,16 @@ public class SearchActivity extends BeamBaseActivity<SearchActivityPresenter> {
     }
     public void toastMessage(String text){
         JUtils.Toast(text);
+    }
+
+    public void showSnackBar(View view,String message, String action, View.OnClickListener listener){
+        Snackbar.make(fab, message, Snackbar.LENGTH_SHORT)
+                .setActionTextColor(ContextCompat.getColor(this,R.color.colorPrimaryDark))
+                .setAction(action,listener).show();
+    }
+    public void stopRefresh(int i){
+           if(searchFragment!=null&&searchFragment.getListView()!=null&&searchFragment.getListView().getSwipeToRefresh()!=null){
+               searchFragment.getListView().getSwipeToRefresh().setEnabled(i==0);
+           }
     }
 }

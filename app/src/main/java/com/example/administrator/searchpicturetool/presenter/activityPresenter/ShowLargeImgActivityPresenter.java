@@ -1,8 +1,11 @@
 package com.example.administrator.searchpicturetool.presenter.activityPresenter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.text.TextUtils;
+import android.content.Intent;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.ViewConfiguration;
 
 import com.example.administrator.searchpicturetool.config.API;
 import com.example.administrator.searchpicturetool.library.imageLoader.EasyImageLoader;
@@ -10,22 +13,17 @@ import com.example.administrator.searchpicturetool.model.SaveBitmapModel;
 import com.example.administrator.searchpicturetool.model.SqlModel;
 import com.example.administrator.searchpicturetool.model.WrapperModel;
 import com.example.administrator.searchpicturetool.model.bean.NetImage;
-import com.example.administrator.searchpicturetool.presenter.fragmentPresenter.NetImgListPresenter;
-import com.example.administrator.searchpicturetool.presenter.fragmentPresenter.SerachFragmentListPresenter;
 import com.example.administrator.searchpicturetool.util.Utils;
 import com.example.administrator.searchpicturetool.view.activity.ShowLargeImgActivity;
 import com.example.administrator.searchpicturetool.presenter.adapter.ShowLargeImgAdapter;
+import com.example.administrator.searchpicturetool.view.activity.UserActivity;
 import com.example.administrator.searchpicturetool.widght.PinchImageViewPager;
-import com.facebook.common.executors.CallerThreadExecutor;
-import com.facebook.common.references.CloseableReference;
-import com.facebook.datasource.DataSource;
-import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber;
-import com.facebook.imagepipeline.image.CloseableImage;
 import com.jude.beam.bijection.Presenter;
 import com.jude.utils.JUtils;
 
 import java.util.ArrayList;
 
+import rx.Subscriber;
 import rx.functions.Action1;
 
 /**
@@ -36,16 +34,37 @@ public class ShowLargeImgActivityPresenter extends Presenter<ShowLargeImgActivit
     int currentPosition = 0;
     ShowLargeImgAdapter adapter;
     //设置事件发生后的消费该事件的观察者
-    Action1<Integer> callbackSubscriber = new Action1<Integer>() {
-        @Override
+    Subscriber<Integer> callbackSubscriber = new Subscriber<Integer>() {
+       /* @Override
         public void call(Integer integer) {
             if (integer.intValue() == API.status.success) {
                 JUtils.Toast("设置成功！");
-                getView().getProgressDialog().dismiss();
+                getView().dismissDialog();
             } else {
                 JUtils.Toast("设置失败...");
-                getView().getProgressDialog().dismiss();
+                getView().dismissDialog();
             }
+        }*/
+
+        @Override
+        public void onNext(Integer integer) {
+            if (integer.intValue() == API.status.success) {
+                JUtils.Toast("设置成功！");
+                getView().dismissDialog();
+            } else {
+                JUtils.Toast("设置失败...");
+                getView().dismissDialog();
+            }
+        }
+
+        @Override
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
         }
     };
     private NetImage netImage;
@@ -58,15 +77,18 @@ public class ShowLargeImgActivityPresenter extends Presenter<ShowLargeImgActivit
      */
     private int state = -1;
     //保存图片后的观察者
-    Action1<String> saveSubscriber = new Action1<String>() {
+    Subscriber<String> saveSubscriber = new Subscriber<String>() {
         @Override
-        public void call(String path) {
+        public void onNext(String path) {
 
             if (!path.equals(API.status.error + "")) {
                 if (state == 0) {
-                    JUtils.Log("path: " + path);
-                    JUtils.ToastLong("图片已保存至：" + path);
+                 //   JUtils.ToastLong("图片已保存至：" + path);
+                    showSnackBar("图片已保存至：" + path,"download");
                     //保存到数据库
+                    if(netImages==null||netImages.get(currentPosition)==null){
+                        return;
+                    }
                     SqlModel.addDownloadImg(getView(), netImages.get(currentPosition), path);
                 }
                 if (state == 1) {
@@ -76,6 +98,16 @@ public class ShowLargeImgActivityPresenter extends Presenter<ShowLargeImgActivit
             } else {
                 JUtils.Toast("未获取到读写sd卡权限！无法保存图片");
             }
+        }
+
+        @Override
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
         }
     };
 
@@ -89,45 +121,69 @@ public class ShowLargeImgActivityPresenter extends Presenter<ShowLargeImgActivit
         adapter.setPinchImageViewPager(getView().getViewPager());
         getView().getViewPager().setCurrentItem(currentPosition);
         getView().getViewPager().setOnPageChangeListener(this);
-        getView().getPg_tv().setText((currentPosition + 1) + "/" + netImages.size());
+        if(netImages!=null&&netImages.size()!=0){
+            getView().getPg_tv().setText((currentPosition + 1) + "/" + netImages.size());
+        }
     }
 
     @Override
     protected void onDestroyView() {
         super.onDestroyView();
-        netImages.clear();
-        netImages =null;
+        if(netImages!=null){
+            netImages.clear();
+            netImages =null;
+        }
         EasyImageLoader.getInstance(getView()).clearMemoryCache();
     }
 
     public void savePicture() {
         state = 0;
+        if(netImages==null||netImages.size()==0){
+            return;
+        }
         downloadBitmapToSdCard(getView(), netImages.get(currentPosition).getLargeImg(), netImages.get(currentPosition).getThumbImg());
     }
 
     public void collectPicture() {
+        if(netImages==null||netImages.size()==0){
+            return;
+        }
         SqlModel.addCollectImg(getView(), netImages.get(currentPosition));
+        showSnackBar("已收藏","collect");
 
     }
 
     public void requestCollectPicture() {
+        if(netImages==null||netImages.size()==0){
+            return;
+        }
         SqlModel.deleteCollectImgByUrl(getView(), netImages.get(currentPosition).getLargeImg());
         getView().setResult(100);
         getView().finish();
+        JUtils.Toast("已取消收藏");
 
     }
 
     public void sharePicture() {
+        if(netImages==null||netImages.size()==0){
+            return;
+        }
         state = 1;
         downloadBitmapEvent(getView(), netImages.get(currentPosition).getLargeImg());
     }
 
     public void setWallWrapper() {
+        if(netImages==null||netImages.size()==0){
+            return;
+        }
         state = 3;
         downloadBitmapEvent(getView(), netImages.get(currentPosition).getLargeImg());
     }
 
     public void setLockWrapper() {
+        if(netImages==null||netImages.size()==0){
+            return;
+        }
         state = 4;
         downloadBitmapEvent(getView(), netImages.get(currentPosition).getLargeImg());
     }
@@ -139,7 +195,10 @@ public class ShowLargeImgActivityPresenter extends Presenter<ShowLargeImgActivit
 
     @Override
     public void onPageSelected(int position) {
-        getView().getPg_tv().setText((position + 1) + "/" + netImages.size());
+        if(netImages!=null&&netImages.size()!=0){
+            getView().getPg_tv().setText((position + 1) + "/" + netImages.size());
+        }
+
         currentPosition = position;
     }
 
@@ -180,11 +239,29 @@ public class ShowLargeImgActivityPresenter extends Presenter<ShowLargeImgActivit
                 }
             } else {
                 JUtils.Toast("下载图片失败");
-                getView().getProgressDialog().dismiss();
+                getView().dismissDialog();
             }
         });
 
     }
+
+    public void showSnackBar(String s,String action){
+        if(!Utils.checkDeviceHasNavigationBar(getView())){
+            getView().showSnackBar(null, s, "查看", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent();
+                    intent.setAction(action);
+                    intent.setClass(getView(),UserActivity.class);
+                    getView().startActivity(intent);
+                }
+            });
+        }else {
+            JUtils.Toast(s);
+        }
+
+    }
+
   /*  private void startShareImg(String path){
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("image*//*");

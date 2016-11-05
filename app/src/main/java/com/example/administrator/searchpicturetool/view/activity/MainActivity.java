@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -16,10 +17,14 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RelativeLayout;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.example.administrator.searchpicturetool.R;
 import com.example.administrator.searchpicturetool.config.ShareConfig;
 import com.example.administrator.searchpicturetool.presenter.activityPresenter.MainActivityPresenter;
+import com.example.administrator.searchpicturetool.util.Utils;
 import com.jude.beam.bijection.RequiresPresenter;
 import com.jude.beam.expansion.BeamBaseActivity;
 import com.jude.utils.JUtils;
@@ -50,6 +55,9 @@ public class MainActivity extends BeamBaseActivity<MainActivityPresenter> implem
     AppBarLayout appBarLayout;
     @BindView(R.id.fab)
     FloatingActionButton fab;
+    @BindView(R.id.main_fab_layout)
+    RelativeLayout fabLayout;
+    private long exitTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +71,7 @@ public class MainActivity extends BeamBaseActivity<MainActivityPresenter> implem
         initAppBarSetting();
         initPush();
         UmengUpdateAgent.forceUpdate(this);
-        navigationView.setCheckedItem(R.id.nav_main);
+        marginNavigationBar(fab);
 
 
     }
@@ -140,29 +148,24 @@ public class MainActivity extends BeamBaseActivity<MainActivityPresenter> implem
             drawer.closeDrawer(GravityCompat.START);
         } else if (searchView.isSearchOpen()) {
             searchView.closeSearch();
-
-
         } else {
-            super.onBackPressed();
+            //super.onBackPressed();
+            exit();
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-        MenuItem item = menu.findItem(R.id.action_search);
-        searchView.setMenuItem(item);
-
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-       /* int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if(item.getItemId()==R.id.action_search){
+            searchView.showSearch();
             return true;
-        }*/
-
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -181,16 +184,13 @@ public class MainActivity extends BeamBaseActivity<MainActivityPresenter> implem
             startActivity(new Intent(this, UserActivity.class));
         } else if (id == R.id.nav_setting) {
             startActivity(new Intent(this, SettingActivity.class));
-        } else if (id == R.id.nav_share) {
+        }/* else if (id == R.id.nav_share) {
             openShare();
-        } else if (id == R.id.nav_rate) {
+        }*/ else if (id == R.id.nav_rate) {
             try {
-                Uri uri = Uri.parse("market://details?id=" + getPackageName());
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                openToRate();
             } catch (Throwable e) {
-
+                JUtils.Toast("未发现任何应用市场");
             }
 
         } else if (id == R.id.nav_send) {
@@ -218,5 +218,57 @@ public class MainActivity extends BeamBaseActivity<MainActivityPresenter> implem
 
     public TabLayout getTabLayout() {
         return tabLayout;
+    }
+
+    public void exit() {
+        boolean hasRated = JUtils.getSharedPreference().getBoolean("hasRated",false);
+        int count = JUtils.getSharedPreference().getInt("app_exit_count", 1);
+        if (!hasRated&&(count==5||count%10==0)) {
+            count++;
+            JUtils.getSharedPreference().edit().putInt("app_exit_count", count).commit();
+            showRatingDialog();
+            return;
+        }
+        if ((System.currentTimeMillis() - exitTime) > 2000) {
+            JUtils.Toast("再按一次退出");
+            exitTime = System.currentTimeMillis();
+        } else {
+            count++;
+            JUtils.getSharedPreference().edit().putInt("app_exit_count", count).commit();
+            finish();
+            //System.exit(0);
+        }
+    }
+
+    public void showRatingDialog() {
+        new MaterialDialog.Builder(this)
+                .title("给个好评")
+                .content("陛下，如果您喜欢这个应用，请给个好评！您的鼓励是我们做得更好的动力！")
+                .negativeText("继续退出")
+                .positiveText("去评分")
+                .cancelable(false)
+                .canceledOnTouchOutside(false)
+                .onPositive((dialog, which) -> {
+                    JUtils.getSharedPreference().edit().putBoolean("hasRated",true).commit();
+                    openToRate();
+
+                })
+                .onNegative((dialog, which) -> finish()).show();
+    }
+
+    public void openToRate() {
+        Uri uri = Uri.parse("market://details?id=" + getPackageName());
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+
+    public void marginNavigationBar(View view){
+        if(!Utils.checkDeviceHasNavigationBar(this)){
+            return;
+        }
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+        layoutParams.setMargins(JUtils.dip2px(16),JUtils.dip2px(16),JUtils.dip2px(16),Utils.getNavigationBarHeight(this)/2);
+        view.setLayoutParams(layoutParams);
     }
 }

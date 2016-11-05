@@ -1,18 +1,26 @@
 package com.example.administrator.searchpicturetool.view.activity;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 import com.example.administrator.searchpicturetool.R;
 import com.example.administrator.searchpicturetool.presenter.activityPresenter.ShowLargeImgActivityPresenter;
+import com.example.administrator.searchpicturetool.util.Utils;
 import com.example.administrator.searchpicturetool.widght.PinchImageViewPager;
 import com.jude.beam.bijection.RequiresPresenter;
 import com.jude.beam.expansion.BeamBaseActivity;
@@ -36,9 +44,10 @@ public class ShowLargeImgActivity extends BeamBaseActivity<ShowLargeImgActivityP
     @BindView(R.id.large_star)
     ImageView star;
     FragmentManager fragmentManager;
+    @BindView(R.id.linearlayout_img)
+    RelativeLayout bottomLayout;
     private boolean hasCollected =false;
     private MaterialDialog mProgressDialog;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +61,8 @@ public class ShowLargeImgActivity extends BeamBaseActivity<ShowLargeImgActivityP
         }
         fragmentManager = getSupportFragmentManager();
         viewPager.setOnClickListener(this);
+        marginNavigationBar(bottomLayout);
+        //hideNavigationBar();
     }
 
     @Override
@@ -107,10 +118,9 @@ public class ShowLargeImgActivity extends BeamBaseActivity<ShowLargeImgActivityP
     public void collect(){
         if(hasCollected){
             getPresenter().requestCollectPicture();
-            JUtils.Toast("已取消收藏");
+
         }else{
             getPresenter().collectPicture();
-            JUtils.Toast("已收藏");
         }
 
     }
@@ -124,31 +134,74 @@ public class ShowLargeImgActivity extends BeamBaseActivity<ShowLargeImgActivityP
                 .itemsCallback((dialog, itemView, position, text) -> {
                     switch (position){
                         case 0:
-                            getProgressDialog().show();
+                            showDialog("设置壁纸","请稍等片刻");
                             getPresenter().setWallWrapper();
                             break;
                         case 1:
                             JUtils.Toast("该功能在下一个版本中开发，敬请期待");
                             break;
+                        case 2:
+                            showDialog("举报该图片","请稍等片刻");
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    dismissDialog();
+                                    JUtils.Toast("已举报");
+                                }
+                            },2000);
                         default:
                             break;
                     }
                 }).show();
     }
+    public void hideNavigationBar(){
 
-    public MaterialDialog getProgressDialog(){
-        if(mProgressDialog==null){
+        if(Build.VERSION.SDK_INT >=Build.VERSION_CODES.KITKAT){
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+    }
+    public MaterialDialog showDialog(String title, String content){
             mProgressDialog = new MaterialDialog.Builder(this)
                     .theme(Theme.DARK)
-                    .content("请稍等片刻...")
-                    .title("设置壁纸")
+                    .content(content)
+                    .title(title)
                     .progress(true, 0)
-                    .build();
-        }
+                    .show();
         return mProgressDialog;
     }
+    public void dismissDialog(){
+        if(mProgressDialog!=null){
+            mProgressDialog.dismiss();
+        }
+    }
 
-   /* @Override
+    public void showSnackBar(View view,String message, String action, View.OnClickListener listener){
+        if (view==null){
+            view =pg_tv;
+        }
+        Snackbar.make(view, message, Snackbar.LENGTH_SHORT)
+                .setActionTextColor(ContextCompat.getColor(this,R.color.colorPrimaryDark))
+                .setAction(action,listener).show();
+    }
+
+    public void marginNavigationBar(RelativeLayout view){
+        if(!Utils.checkDeviceHasNavigationBar(this)){
+            return;
+        }
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+        layoutParams.setMargins(JUtils.dip2px(16),JUtils.dip2px(8),JUtils.dip2px(16),Utils.getNavigationBarHeight(this));
+        view.setLayoutParams(layoutParams);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation==Configuration.ORIENTATION_LANDSCAPE) {
+            // Nothing need to be done here
+
+        }
+    }
+    /* @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 
         switch (requestCode){
