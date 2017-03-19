@@ -28,17 +28,12 @@ Material Design风格，使用Rxjava，MVP快速开发框架，封装的Recycler
 
 # Screenshot
 
-![1](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro1.jpg "")
-![2](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro2.jpg "")
-![3](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro3.jpg "")
+![1](http://img.wdjimg.com/mms/screenshot/e/22/40616abd669502c43a7c167f4461b22e_320_534.jpeg "")
+![2](http://img.wdjimg.com/mms/screenshot/f/5e/c0763134833ab3bdb497f9e1346015ef_320_534.jpeg "")
+![3](http://img.wdjimg.com/mms/screenshot/a/69/7b790d6ee7159b3940abf7363865069a_320_534.jpeg "")
 
-![4](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro4.jpg "")
-![5](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro5.jpg "")
-![6](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro6.jpg "")
-
-![7](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro7.jpg "")
-![8](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro8.jpg "")
-![9](https://github.com/wenhuaijun/SearchPictureTool/blob/master/introduce/intro9.jpg "")
+![4](http://img.wdjimg.com/mms/screenshot/e/98/8f14df514f7205ce30fe514325bd798e_320_534.jpeg "")
+![5](http://img.wdjimg.com/mms/screenshot/f/1d/51c27bc0f0942e506879ae2b22bee1df_320_534.jpeg "")
 
 # 下载地址
 
