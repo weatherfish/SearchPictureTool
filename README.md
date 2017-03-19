@@ -22,7 +22,7 @@
 如需内推请将简历发送到我的邮箱
 我的邮箱：huaijun.whj@alibaba-inc.com
 
-#图片搜索APP
+#图片搜索APP(3.4.0版本)
 
 Material Design风格，使用Rxjava，MVP快速开发框架，封装的RecyclerView，retrofit 2.0网络请求库，Fresco图片加载库，图片瀑布流和错位式布局。具有热门推荐、每日一笑、板块分类、一键下载图片、分享图片、收藏图片、设为桌面壁纸、设为锁屏壁纸。
 
