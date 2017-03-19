@@ -31,7 +31,6 @@ Material Design风格，使用Rxjava，MVP快速开发框架，封装的Recycler
 ![1](http://img.wdjimg.com/mms/screenshot/e/22/40616abd669502c43a7c167f4461b22e_320_534.jpeg "")
 ![2](http://img.wdjimg.com/mms/screenshot/f/5e/c0763134833ab3bdb497f9e1346015ef_320_534.jpeg "")
 ![3](http://img.wdjimg.com/mms/screenshot/a/69/7b790d6ee7159b3940abf7363865069a_320_534.jpeg "")
-
 ![4](http://img.wdjimg.com/mms/screenshot/e/98/8f14df514f7205ce30fe514325bd798e_320_534.jpeg "")
 ![5](http://img.wdjimg.com/mms/screenshot/f/1d/51c27bc0f0942e506879ae2b22bee1df_320_534.jpeg "")
 
